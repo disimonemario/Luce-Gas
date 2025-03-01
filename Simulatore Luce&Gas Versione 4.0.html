@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulatore Bollette Luce e Gas</title>
+    <style>
+        /* Tema Bianco Standard (predefinito) */
+        .tema-bianco {
+            background-color: #ffffff;
+            color: #333333;
+        }
+        .tema-bianco .container {
+            background: #f9f9f9;
+            border: 1px solid #ddd;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .tema-bianco input, .tema-bianco select {
+            background-color: #fff;
+            border: 1px solid #ccc;
+            color: #333;
+        }
+        .tema-bianco button {
+            background: #007bff;
+            color: white;
+        }
+        .tema-bianco button:hover {
+            background: #0056b3;
+        }
+        .tema-bianco #risultato {
+            background: #e9ecef;
+            color: #333;
+        }
+        .tema-bianco footer {
+            color: #666;
+        }
+
+        /* Tema Scuro */
+        .tema-scuro {
+            background-color: #2c3e50;
+            color: #ecf0f1;
+        }
+        .tema-scuro .container {
+            background: #34495e;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+        }
+        .tema-scuro input, .tema-scuro select {
+            background-color: #ecf0f1;
+            border: none;
+            color: #333;
+        }
+        .tema-scuro button {
+            background: #1abc9c;
+            color: white;
+        }
+        .tema-scuro button:hover {
+            background: #16a085;
+        }
+        .tema-scuro #risultato {
+            background: #2c3e50;
+            color: #ecf0f1;
+        }
+        .tema-scuro footer {
+            color: #bdc3c7;
+        }
+
+        /* Stili comuni */
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 20px;
+            margin: 0;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+            padding: 20px;
+            border-radius: 10px;
+        }
+        input, select {
+            width: 90%;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 10px 5px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        #risultato {
+            margin-top: 20px;
+            font-weight: bold;
+            padding: 15px;
+            border-radius: 5px;
+        }
+        footer {
+            margin-top: 30px;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body class="tema-bianco">
+<div class="container">
+    <h1>Simulatore Bollette Luce e Gas</h1>
+
+    <!-- Selezione del tema -->
+    <label for="tema">Seleziona Tema:</label>
+    <select id="tema" onchange="cambiaTema()">
+        <option value="bianco">Tema Bianco</option>
+        <option value="scuro">Tema Scuro</option>
+    </select>
+
+    <!-- Form di input -->
+    <label for="tipo">Tipo Fornitura:</label>
+    <select id="tipo" onchange="aggiornaCampi(); calcolaBolletta();">
+        <option value="luce">Luce</option>
+        <option value="gas">Gas</option>
+    </select>
+
+    <!-- Sezione Fasce Orarie (solo per la luce) -->
+    <div id="fasceOrarie" style="display: none;">
+        <label for="fascia">Seleziona Fascia Oraria:</label>
+        <select id="fascia" onchange="aggiornaFasce(); calcolaBolletta();">
+            <option value="monoraria">Monoraria</option>
+            <option value="bioraria">Bioraria (F1 e F2-F3)</option>
+        </select>
+
+        <!-- Campo per Monoraria -->
+        <div id="monorariaSection">
+            <label for="tariffaMonoraria">Tariffa Monoraria (€/kWh):</label>
+            <input type="number" id="tariffaMonoraria" placeholder="Inserisci tariffa monoraria" step="0.001" min="0" oninput="calcolaBolletta()">
+
+            <label for="consumoMonorario">Consumo Mensile (kWh):</label>
+            <input type="number" id="consumoMonorario" placeholder="Inserisci consumo" min="0" oninput="calcolaBolletta()">
+        </div>
+
+        <!-- Campi per Bioraria -->
+        <div id="biorariaSection" style="display: none;">
+            <label for="tariffaF1">Tariffa F1 (€/kWh):</label>
+            <input type="number" id="tariffaF1" placeholder="Inserisci tariffa F1" step="0.001" min="0" oninput="calcolaBolletta()">
+
+            <label for="tariffaF2F3">Tariffa F2-F3 (€/kWh):</label>
+            <input type="number" id="tariffaF2F3" placeholder="Inserisci tariffa F2-F3" step="0.001" min="0" oninput="calcolaBolletta()">
+
+            <label for="consumoF1">Consumo F1 (kWh):</label>
+            <input type="number" id="consumoF1" placeholder="Inserisci consumo F1" min="0" oninput="calcolaBolletta()">
+
+            <label for="consumoF2F3">Consumo F2-F3 (kWh):</label>
+            <input type="number" id="consumoF2F3" placeholder="Inserisci consumo F2-F3" min="0" oninput="calcolaBolletta()">
+        </div>
+    </div>
+
+    <!-- Sezione Consumo Monorario (solo per il gas) -->
+    <div id="consumoMonorarioGas">
+        <label for="consumoGas">Consumo Mensile (Smc):</label>
+        <input type="number" id="consumoGas" placeholder="Inserisci consumo" min="0" oninput="calcolaBolletta()">
+    </div>
+
+    <label for="tariffaScelta">Seleziona Tariffa:</label>
+    <select id="tariffaScelta" onchange="aggiornaCampi(); calcolaBolletta();">
+        <option value="maggioreTutela">Maggior Tutela</option>
+        <option value="tutelaGraduale">Tutela Graduale</option>
+        <option value="liberoFisso">Mercato Libero (Fisso)</option>
+        <option value="liberoVariabile">Mercato Libero (Variabile)</option>
+    </select>
+
+    <label for="quota_fissa">Quota Fissa Mensile (€):</label>
+    <input type="number" id="quota_fissa" placeholder="Inserisci quota fissa" step="0.01" min="0" oninput="calcolaBolletta()">
+
+    <label for="iva">IVA (%):</label>
+    <select id="iva" onchange="calcolaBolletta()">
+        <option value="10">10%</option>
+        <option value="22">22%</option>
+    </select>
+
+    <!-- Pulsanti -->
+    <button onclick="calcolaBolletta()">Calcola Bolletta</button>
+    <button onclick="resetForm()">Reset</button>
+
+    <div id="risultato"></div>
+</div>
+
+<footer>
+    Developer by Mario Di Simone<br>
+    Nota: Questo simulatore fornisce una stima indicativa. I costi effettivi possono variare in base alla tariffa e agli operatori.
+</footer>
+
+<script>
+    // Tariffe aggiornate per luce e gas (febbraio 2025 - stime)
+    const tariffeLuce = {
+        maggioreTutela: { tariffa: 0.28, quotaFissa: 12, oneri: 0.06, trasporto: 0.03, accise: 0.03 },
+        tutelaGraduale: { tariffa: 0.26, quotaFissa: 11, oneri: 0.05, trasporto: 0.03, accise: 0.03 },
+        liberoFisso: { tariffa: 0.23, quotaFissa: 10, oneri: 0.04, trasporto: 0.03, accise: 0.03 },
+        liberoVariabile: { tariffa: 0.25, quotaFissa: 11, oneri: 0.05, trasporto: 0.03, accise: 0.03 }
+    };
+
+    const tariffeGas = {
+        maggioreTutela: { tariffa: 0.85, quotaFissa: 18, oneri: 0.12, trasporto: 0.06, accise: 0.22 },
+        tutelaGraduale: { tariffa: 0.80, quotaFissa: 17, oneri: 0.11, trasporto: 0.06, accise: 0.22 },
+        liberoFisso: { tariffa: 0.75, quotaFissa: 15, oneri: 0.10, trasporto: 0.06, accise: 0.22 },
+        liberoVariabile: { tariffa: 0.78, quotaFissa: 16, oneri: 0.11, trasporto: 0.06, accise: 0.22 }
+    };
+
+    // Funzione per cambiare tema
+    function cambiaTema() {
+        const temaSelezionato = document.getElementById("tema").value;
+        if (temaSelezionato === "scuro") {
+            document.body.className = "tema-scuro";
+        } else {
+            document.body.className = "tema-bianco";
+        }
+    }
+
+    // Funzione per aggiornare i campi in base al tipo di fornitura
+    function aggiornaCampi() {
+        const tipo = document.getElementById("tipo").value;
+        const tariffaScelta = document.getElementById("tariffaScelta").value;
+
+        if (tipo === "luce") {
+            document.getElementById("fasceOrarie").style.display = "block";
+            document.getElementById("consumoMonorarioGas").style.display = "none";
+            aggiornaFasce(); // Aggiorna i campi delle fasce orarie
+        } else if (tipo === "gas") {
+            document.getElementById("fasceOrarie").style.display = "none";
+            document.getElementById("consumoMonorarioGas").style.display = "block";
+            const tariffe = tariffeGas[tariffaScelta];
+            document.getElementById("tariffa").value = tariffe.tariffa;
+            document.getElementById("quota_fissa").value = tariffe.quotaFissa;
+        }
+    }
+
+    // Funzione per aggiornare i campi delle fasce orarie
+    function aggiornaFasce() {
+        const fascia = document.getElementById("fascia").value;
+        if (fascia === "monoraria") {
+            document.getElementById("monorariaSection").style.display = "block";
+            document.getElementById("biorariaSection").style.display = "none";
+        } else if (fascia === "bioraria") {
+            document.getElementById("monorariaSection").style.display = "none";
+            document.getElementById("biorariaSection").style.display = "block";
+        }
+    }
+
+    // Funzione per calcolare la bolletta
+    function calcolaBolletta() {
+        const tipo = document.getElementById("tipo").value;
+        const tariffaScelta = document.getElementById("tariffaScelta").value;
+        const quotaFissa = parseFloat(document.getElementById("quota_fissa").value) || 0;
+        const iva = parseFloat(document.getElementById("iva").value);
+        const risultato = document.getElementById("risultato");
+
+        let costoTotale = 0;
+
+        if (tipo === "luce") {
+            const fascia = document.getElementById("fascia").value;
+            const tariffe = tariffeLuce[tariffaScelta];
+            let costoVariabile = 0;
+
+            if (fascia === "monoraria") {
+                const consumoMonorario = parseFloat(document.getElementById("consumoMonorario").value) || 0;
+                const tariffaMonoraria = parseFloat(document.getElementById("tariffaMonoraria").value) || tariffe.tariffa;
+                costoVariabile = consumoMonorario * tariffaMonoraria;
+            } else if (fascia === "bioraria") {
+                const consumoF1 = parseFloat(document.getElementById("consumoF1").value) || 0;
+                const consumoF2F3 = parseFloat(document.getElementById("consumoF2F3").value) || 0;
+                const tariffaF1 = parseFloat(document.getElementById("tariffaF1").value) || tariffe.tariffa;
+                const tariffaF2F3 = parseFloat(document.getElementById("tariffaF2F3").value) || tariffe.tariffa * 0.8;
+                costoVariabile = (consumoF1 * tariffaF1) + (consumoF2F3 * tariffaF2F3);
+            }
+
+            const costiAggiuntivi = (consumoF1 + consumoF2F3) * (tariffe.oneri + tariffe.trasporto + tariffe.accise);
+            costoTotale = costoVariabile + quotaFissa + costiAggiuntivi;
+        } else if (tipo === "gas") {
+            const consumoGas = parseFloat(document.getElementById("consumoGas").value) || 0;
+            const tariffe = tariffeGas[tariffaScelta];
+            const costoVariabile = consumoGas * tariffe.tariffa;
+            const costiAggiuntivi = consumoGas * (tariffe.oneri + tariffe.trasporto + tariffe.accise);
+            costoTotale = costoVariabile + quotaFissa + costiAggiuntivi;
+        }
+
+        const costoTotaleIVA = costoTotale + (costoTotale * iva / 100);
+        risultato.innerHTML = `
+            <strong>Totale bolletta ${tipo}:</strong> € ${costoTotaleIVA.toFixed(2)}<br>
+            <small>(Costo energia: € ${costoTotale.toFixed(2)}, Quota fissa: € ${quotaFissa.toFixed(2)})</small>
+        `;
+    }
+
+    // Funzione per resettare il form
+    function resetForm() {
+        document.getElementById("tipo").value = "luce";
+        document.getElementById("tariffaScelta").value = "maggioreTutela";
+        document.getElementById("consumoMonorario").value = "";
+        document.getElementById("consumoF1").value = "";
+        document.getElementById("consumoF2F3").value = "";
+        document.getElementById("consumoGas").value = "";
+        document.getElementById("quota_fissa").value = "";
+        document.getElementById("iva").value = "10";
+        document.getElementById("risultato").innerHTML = "";
+        aggiornaCampi(); // Aggiorna i campi con i valori predefiniti
+        calcolaBolletta(); // Ricalcola la bolletta
+    }
+
+    // Inizializza i campi al caricamento della pagina
+    window.onload = function() {
+        aggiornaCampi();
+        calcolaBolletta();
+    };
+</script>
+</body>
+</html>
